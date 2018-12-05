@@ -2,6 +2,20 @@
     <link rel="stylesheet" type="text/css" href="style.css">
     <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
     <script>
+
+        // String.format function
+        if (!String.prototype.format) {
+            String.prototype.format = function() {
+                var args = arguments;
+                return this.replace(/{(\d+)}/g, function(match, number) { 
+                return typeof args[number] != 'undefined'
+                    ? args[number]
+                    : match
+                ;
+                });
+            };
+        }
+
         $(document).ready(function() {
             // console.log("loaded");
             var people;
@@ -37,7 +51,6 @@
                     }
                 });
                 
-
                 var processed = deptDict
                     .filter(function (v) {
                         return v.Rank != null;
@@ -48,16 +61,54 @@
             });
         });
         function generateDepartment(dept) {
-            return $("<div />", {
-                    html: "<div class='dept-title'>" + dept.DepChineseName + "</div>"
-                });
+            var deptTitle = $("<div />", {
+                html: dept.DepChineseName,
+                class: 'dept-title',
+            });
+            var deptContent = $("<div />", {
+                class: 'dept-content'
+            });
+
+            var deptContainer = $("<div />")
+                .append(deptTitle)
+                .append(deptContent);
+
+            deptTitle.on("click", function() {
+                deptContent.slideToggle();
+            });
+
+            return deptContainer;
         }
 
-        function generatePeople(people) {
-            return $("<div />", {
-                    class: "people",
-                    html: people.EmployeeName + "<br />"
+        var PEOPLE_TEMPLATE = "姓名：{0}<br />"
+            + "职务：{1}<br />"
+            + "办公电话：{2}<br />"
+            + "浙大邮箱：{3}<br />"
+            + "Office 365：{4}<br />"
+            + "办公室：{5}<br />"
+            + "岗位职责: {6}<br />"
+            + "<hr />"
+
+        function generatePeople(p) {
+            var node = $("<div />", {
+                    class: "people"
                 });
+            
+            node.append($('<img />', {
+                class: 'avatar',
+                align: 'left',
+                src: 'http://www.intl.zju.edu.cn/PeoApi/Head/{0}.png'.format(p.EmployeeNo)
+            }));
+
+            node.append(PEOPLE_TEMPLATE.format(p.EmployeeName, 
+                p.Title,
+                p.BusinessPhone,
+                p.Email != undefined ? p.Email : "",
+                p.O365 != undefined ? + p.O365 + "@intl.zju.edu.cn" : "",
+                p.OfficeLocation != undefined ? p.OfficeLocation : "",
+                p.JobDescription != null ? p.JobDescription : ""));
+
+            return node;
         }
         
         function populateDirectory(deptArray, level) {
@@ -68,19 +119,7 @@
                 }
                 
                 var dept = generateDepartment(v);
-                
-                if (v.people != undefined) {
-                    $.each(v.people, function(_, pv) {
-                        var people = generatePeople(pv);
-                        dept.append(people);
-                    });
-                }
-
-                if (v.sub != undefined) {
-                    dept.append(populateDirectory(v.sub, 1));
-                }
                 result.append(dept);
-                
                 switch(level) {
                     case 0: 
                     dept.addClass("dept");
@@ -90,6 +129,17 @@
                     case 1:
                     dept.addClass("sub-dept");
                     break;
+                }
+
+                var deptContent = $("> .dept-content", dept);
+                if (v.people != undefined) {
+                    $.each(v.people, function(_, pv) {
+                        var people = generatePeople(pv);
+                        deptContent.append(people);
+                    });
+                }
+                if (v.sub != undefined) {
+                    deptContent.append(populateDirectory(v.sub, 1));
                 }
             });
 
