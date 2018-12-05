@@ -1,0 +1,102 @@
+<html>
+    <link rel="stylesheet" type="text/css" href="style.css">
+    <script src="http://code.jquery.com/jquery-1.7.min.js"></script>
+    <script>
+        $(document).ready(function() {
+            // console.log("loaded");
+            var people;
+            var departments;
+            $.when(
+                $.get("http://10.105.1.203/PeopleApi/api/Directory"),
+                $.get("http://10.105.1.203/PeopleApi/api/Departments")
+            ).done(function (r1, r2) {
+                people = r1[0];
+                departments = r2[0];
+
+                var deptDict  = [];
+                $.each(departments, function (_, v) {
+                    deptDict[v.DepNo] = v;
+                });
+                
+                // assign people to deparment
+                $.each(people, function (_, pv) {
+                    var dept = deptDict[pv.DepNo];
+                    if (dept.people == undefined) {
+                        dept.people = [];
+                    }
+                    dept.people.push(pv);
+                });
+
+                // adjust deparmtent hiarachy
+                $.each(deptDict, function(k, v) {
+                    if (v.DirectManagedBy != null && v.DirectManagedBy != 0) {
+                        if (deptDict[v.DirectManagedBy].sub == undefined) {
+                            deptDict[v.DirectManagedBy].sub = [];
+                        }
+                        deptDict[v.DirectManagedBy].sub.push(v);
+                    }
+                });
+                
+
+                var processed = deptDict
+                    .filter(function (v) {
+                        return v.Rank != null;
+                    });
+                console.log(processed);
+                
+                populateDirectory(processed, 0).appendTo($("#directory"));
+            });
+        });
+        function generateDepartment(dept) {
+            return $("<div />", {
+                    html: "<div class='dept-title'>" + dept.DepChineseName + "</div>"
+                });
+        }
+
+        function generatePeople(people) {
+            return $("<div />", {
+                    class: "people",
+                    html: people.EmployeeName + "<br />"
+                });
+        }
+        
+        function populateDirectory(deptArray, level) {
+            var result = $("<div />");
+            $.each(deptArray, function (_, v)  {
+                if (v.Rank == null) {
+                    return true;
+                }
+                
+                var dept = generateDepartment(v);
+                
+                if (v.people != undefined) {
+                    $.each(v.people, function(_, pv) {
+                        var people = generatePeople(pv);
+                        dept.append(people);
+                    });
+                }
+
+                if (v.sub != undefined) {
+                    dept.append(populateDirectory(v.sub, 1));
+                }
+                result.append(dept);
+                
+                switch(level) {
+                    case 0: 
+                    dept.addClass("dept");
+                    result.append("<br />");
+                    break;
+                    
+                    case 1:
+                    dept.addClass("sub-dept");
+                    break;
+                }
+            });
+
+            return result;
+        }
+    </script>
+    <body>
+        <div id="directory"></div>
+    </body>
+</html>
