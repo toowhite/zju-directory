@@ -21,7 +21,7 @@
             var people;
             var departments;
             $.when(
-                $.get("http://10.105.1.203/PeopleApi/api/Directory"),
+                $.get("http://10.105.1.203/PeopleApi/api/Directory?jobDescription=true"),
                 $.get("http://10.105.1.203/PeopleApi/api/Departments")
             ).done(function (r1, r2) {
                 people = r1[0];
@@ -55,9 +55,10 @@
                     .filter(function (v) {
                         return v.Rank != null;
                     });
-                console.log(processed);
+                // console.log(processed);
                 
                 populateDirectory(processed, 0).appendTo($("#directory"));
+                $("#directory .dept-content").slideUp();
             });
         });
         function generateDepartment(dept) {
@@ -80,18 +81,21 @@
             return deptContainer;
         }
 
-        var PEOPLE_TEMPLATE = "姓名：{0}<br />"
+        var PEOPLE_TEMPLATE = "<div class='people-profile'>"
+            + "姓名：{0}<br />"
             + "职务：{1}<br />"
             + "办公电话：{2}<br />"
-            + "浙大邮箱：{3}<br />"
-            + "Office 365：{4}<br />"
+            + "浙大邮箱：<a href='mailto:{3}'>{3}</a><br />"
+            + "Office 365：<a href='mailto:{4}'>{4}</a><br />"
             + "办公室：{5}<br />"
-            + "岗位职责: {6}<br />"
-            + "<hr />"
+            + "{6}<br />"
+            + "</div>"
+            + "<hr />";
 
         function generatePeople(p) {
             var node = $("<div />", {
-                    class: "people"
+                    class: "people",
+                    id: "p_" + p.EmployeeNo
                 });
             
             node.append($('<img />', {
@@ -102,11 +106,11 @@
 
             node.append(PEOPLE_TEMPLATE.format(p.EmployeeName, 
                 p.Title,
-                p.BusinessPhone,
-                p.Email != undefined ? p.Email : "",
-                p.O365 != undefined ? + p.O365 + "@intl.zju.edu.cn" : "",
-                p.OfficeLocation != undefined ? p.OfficeLocation : "",
-                p.JobDescription != null ? p.JobDescription : ""));
+                p.BusinessPhone ? p.BusinessPhone : "",
+                p.Email ? p.Email : "",
+                p.O365 ? (p.O365 + "@intl.zju.edu.cn") : "",
+                p.OfficeLocation ? p.OfficeLocation : "",
+                p.JobDescription ? "岗位职责: " + p.JobDescription : ""));
 
             return node;
         }
