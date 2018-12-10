@@ -41,7 +41,7 @@
                     dept.people.push(pv);
                 });
 
-                // adjust deparmtent hiarachy
+                // adjust deparmtent hierachy
                 $.each(deptDict, function(k, v) {
                     if (v.DirectManagedBy != null && v.DirectManagedBy != 0) {
                         if (deptDict[v.DirectManagedBy].sub == undefined) {
@@ -54,6 +54,9 @@
                 var processed = deptDict
                     .filter(function (v) {
                         return v.Rank != null;
+                    })
+                    .sort(function(a, b) {
+                        return a.Rank - b.Rank;
                     });
                 // console.log(processed);
                 
