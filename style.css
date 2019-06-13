@@ -11,7 +11,8 @@
 .sub-dept > .dept-title {
     background-color: lightseagreen;
     font-size: 16px;
-    padding: 3px;
+    padding: 5px;
+    margin-left: 5px;
 }
 
 img.avatar {

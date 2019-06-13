@@ -16,6 +16,17 @@
             };
         }
 
+        var PEOPLE_TEMPLATE = "<div class='people-profile'>"
+            + "姓名：{0}<br />"
+            + "职务：{1}<br />"
+            + "办公电话：{2}<br />"
+            + "浙大邮箱：<a href='mailto:{3}'>{3}</a><br />"
+            + "Office 365：<a href='mailto:{4}'>{4}</a><br />"
+            + "办公室：{5}<br />"
+            + "{6}<br />"
+            + "</div>"
+            + "<hr />";
+
         $(document).ready(function() {
             // console.log("loaded");
             var people;
@@ -53,17 +64,19 @@
                 
                 var processed = deptDict
                     .filter(function (v) {
-                        return v.Rank != null;
+                        return v.Rank != null 
+                            && (v.DirectManagedBy == null || v.DirectManagedBy == 0);
                     })
                     .sort(function(a, b) {
                         return a.Rank - b.Rank;
                     });
                 // console.log(processed);
                 
-                populateDirectory(processed, 0).appendTo($("#directory"));
+                populateDirectory(processed, 0, $("#directory"));
                 $("#directory .dept-content").slideUp();
             });
         });
+
         function generateDepartment(dept) {
             var deptTitle = $("<div />", {
                 html: dept.DepChineseName,
@@ -83,17 +96,6 @@
 
             return deptContainer;
         }
-
-        var PEOPLE_TEMPLATE = "<div class='people-profile'>"
-            + "姓名：{0}<br />"
-            + "职务：{1}<br />"
-            + "办公电话：{2}<br />"
-            + "浙大邮箱：<a href='mailto:{3}'>{3}</a><br />"
-            + "Office 365：<a href='mailto:{4}'>{4}</a><br />"
-            + "办公室：{5}<br />"
-            + "{6}<br />"
-            + "</div>"
-            + "<hr />";
 
         function generatePeople(p) {
             var node = $("<div />", {
@@ -118,8 +120,8 @@
             return node;
         }
         
-        function populateDirectory(deptArray, level) {
-            var result = $("<div />");
+        function populateDirectory(deptArray, level, parent) {
+            var result = parent;
             $.each(deptArray, function (_, v)  {
                 if (v.Rank == null) {
                     return true;
@@ -146,14 +148,23 @@
                     });
                 }
                 if (v.sub != undefined) {
-                    deptContent.append(populateDirectory(v.sub, 1));
+                    populateDirectory(v.sub, 1, dept);
                 }
             });
 
             return result;
         }
+
+        function toggleDepartments() {
+            $('.dept-content').slideToggle();
+            var value = $('#expand-button').val();
+            $('#expand-button').val(value == 'Expand All' ? 'Unexpand All' : 'Expand All');
+        }
     </script>
     <body>
+        <input id="expand-button" type="button" value="Expand All" onclick="toggleDepartments();" />
+        Expand all departments, then you can search using <strong>CTRL+F</strong> (browser text search).
+        <hr />
         <div id="directory"></div>
     </body>
 </html>
